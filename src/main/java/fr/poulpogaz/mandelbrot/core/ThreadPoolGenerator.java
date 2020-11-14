@@ -10,15 +10,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ThreadPoolGenerator implements MandelbrotGenerator {
+public class ThreadPoolGenerator extends MandelbrotGenerator {
 
     public static final int TILE_SIZE = 64;
 
     private ExecutorService executor;
 
     @Override
-    public BufferedImage generate(BoundsD bounds, Dimension size, Palette palette, int maxIteration) {
-        Utils.correctAspectRatio(bounds, size);
+    public BufferedImage generate() {
+        Utils.correctAspectRatio(bounds, imageSize);
 
         palette.preCompute(maxIteration);
 
@@ -28,12 +28,12 @@ public class ThreadPoolGenerator implements MandelbrotGenerator {
             executor = Executors.newFixedThreadPool(nCore);
         }
 
-        int width = (int) Math.ceil(size.getWidth() / TILE_SIZE);
-        int height = (int) Math.ceil(size.getHeight() / TILE_SIZE);
+        int width = (int) Math.ceil(imageSize.getWidth() / TILE_SIZE);
+        int height = (int) Math.ceil(imageSize.getHeight() / TILE_SIZE);
 
         double add = bounds.width() / width; // bounds.height() / height = bounds.width() / width because we have corrected the aspect ratio
 
-        int[] pixels = new int[size.width * size.height];
+        int[] pixels = new int[imageSize.width * imageSize.height];
 
         List<CompletableFuture<Void>> jobsList = new ArrayList<>();
 
@@ -42,12 +42,12 @@ public class ThreadPoolGenerator implements MandelbrotGenerator {
                 int minX_ = x * TILE_SIZE;
                 int minY_ = y * TILE_SIZE;
 
-                int maxX_ = Math.min(minX_ + TILE_SIZE, size.width);
-                int maxY_ = Math.min(minY_ + TILE_SIZE, size.height);
+                int maxX_ = Math.min(minX_ + TILE_SIZE, imageSize.width);
+                int maxY_ = Math.min(minY_ + TILE_SIZE, imageSize.height);
 
                 BoundsI imageBounds = new BoundsI(minX_, minY_, maxX_, maxY_);
 
-                PartialJob job = new PartialJob(bounds, imageBounds, size, maxIteration, palette, pixels);
+                PartialJob job = new PartialJob(bounds, imageBounds, imageSize, maxIteration, palette, smooth, pixels);
                 jobsList.add(CompletableFuture.runAsync(job, executor));
             }
         }
@@ -55,7 +55,7 @@ public class ThreadPoolGenerator implements MandelbrotGenerator {
         CompletableFuture<?> allJobs = CompletableFuture.allOf(jobsList.toArray(new CompletableFuture[0]));
         allJobs.join();
 
-        return Utils.toImage(pixels, size.width, size.height);
+        return Utils.toImage(pixels, imageSize.width, imageSize.height);
     }
 
     @Override

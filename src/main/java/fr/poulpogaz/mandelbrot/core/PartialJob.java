@@ -4,6 +4,7 @@ import fr.poulpogaz.mandelbrot.core.palettes.Palette;
 
 import java.awt.*;
 
+// https://en.wikipedia.org/wiki/Plotting_algorithms_for_the_Mandelbrot_set
 public class PartialJob implements Runnable {
 
     private final BoundsD bounds;
@@ -15,12 +16,15 @@ public class PartialJob implements Runnable {
     private final Palette palette;
     private final int[] pixels;
 
-    public PartialJob(BoundsD bounds, BoundsI partialImageBounds, Dimension imageSize, int maxIteration, Palette palette, int[] pixels) {
+    private final boolean smooth;
+
+    public PartialJob(BoundsD bounds, BoundsI partialImageBounds, Dimension imageSize, int maxIteration, Palette palette, boolean smooth, int[] pixels) {
         this.bounds = bounds;
         this.partialImageBounds = partialImageBounds;
         this.imageSize = imageSize;
         this.maxIteration = maxIteration;
         this.palette = palette;
+        this.smooth = smooth;
         this.pixels = pixels;
     }
 
@@ -34,22 +38,39 @@ public class PartialJob implements Runnable {
 
                 int color;
                 if (isInsideMandelbrot(x, y)) {
-                    color = palette.of(maxIteration, maxIteration);
+                    color = palette.of(maxIteration, maxIteration, x, y, false);
                 } else {
                     double x0 = x;
                     double y0 = y;
 
                     int iteration = 0;
 
+                    double xOld = 0;
+                    double yOld = 0;
+                    int period = 0;
                     while (x * x + y * y < 4 && iteration < maxIteration) {
                         double xTemp = x * x - y * y + x0;
                         y = 2 * x * y + y0;
                         x = xTemp;
 
                         iteration++;
+
+                        // periodicity checking
+                        if (x == xOld && yOld == y) {
+                            iteration = maxIteration;
+                            break;
+                        }
+
+                        period++;
+
+                        if (period > 20) {
+                            period = 0;
+                            xOld = x;
+                            yOld = y;
+                        }
                     }
 
-                    color = palette.of(iteration, maxIteration);
+                    color = palette.of(iteration, maxIteration, x, y, smooth);
                 }
 
                 pixels[yImage * imageSize.width + xImage] = color;

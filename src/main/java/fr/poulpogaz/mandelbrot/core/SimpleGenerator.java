@@ -1,32 +1,30 @@
 package fr.poulpogaz.mandelbrot.core;
 
-import fr.poulpogaz.mandelbrot.core.palettes.Palette;
-
-import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
  * https://fr.wikipedia.org/wiki/Ensemble_de_Mandelbrot
  */
-public class SimpleGenerator implements MandelbrotGenerator {
+public class SimpleGenerator extends MandelbrotGenerator {
 
     @Override
-    public BufferedImage generate(BoundsD bounds, Dimension size, Palette palette, int maxIteration) {
-        Utils.correctAspectRatio(bounds, size);
+    public BufferedImage generate() {
+        Utils.correctAspectRatio(bounds, imageSize);
 
         palette.preCompute(maxIteration);
 
-        int[] pixels = new int[size.width * size.height];
+        int[] pixels = new int[imageSize.width * imageSize.height];
 
         PartialJob job = new PartialJob(bounds,
-                new BoundsI(0, 0, size.width, size.height),
-                size,
+                new BoundsI(0, 0, imageSize.width, imageSize.height),
+                imageSize,
                 maxIteration,
                 palette,
+                smooth,
                 pixels);
         job.run();
 
-        return Utils.toImage(pixels, size.width, size.height);
+        return Utils.toImage(pixels, imageSize.width, imageSize.height);
     }
 
     @Override

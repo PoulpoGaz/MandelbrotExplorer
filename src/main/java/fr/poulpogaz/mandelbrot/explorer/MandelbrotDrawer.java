@@ -4,8 +4,6 @@ import fr.poulpogaz.mandelbrot.Chronometer;
 import fr.poulpogaz.mandelbrot.core.BoundsD;
 import fr.poulpogaz.mandelbrot.core.MandelbrotGenerator;
 import fr.poulpogaz.mandelbrot.core.SimpleGenerator;
-import fr.poulpogaz.mandelbrot.core.palettes.GrayScalePalette;
-import fr.poulpogaz.mandelbrot.core.palettes.HuePalette;
 import fr.poulpogaz.mandelbrot.core.palettes.Palette;
 import fr.poulpogaz.mandelbrot.explorer.input.MouseHandler;
 
@@ -28,9 +26,6 @@ public class MandelbrotDrawer extends DrawerBase {
 
     // draw variables
     private MandelbrotGenerator generator = new SimpleGenerator();
-    private BoundsD bounds = new BoundsD(MandelbrotGenerator.DEFAULT_BOUNDS);
-    private Palette palette = new HuePalette();
-    private int iteration = 128;
 
     // update variables
     private Point lastPoint;
@@ -53,7 +48,7 @@ public class MandelbrotDrawer extends DrawerBase {
         }
 
         if (keyHandler.isKeyReleased(KeyEvent.VK_R)) {
-            bounds = new BoundsD(MandelbrotGenerator.DEFAULT_BOUNDS);
+            generator.setBounds(new BoundsD(MandelbrotGenerator.DEFAULT_BOUNDS));
         }
 
         lastPoint = point;
@@ -63,6 +58,8 @@ public class MandelbrotDrawer extends DrawerBase {
         Dimension size = getSize();
 
         Point2D diff = new Point2D.Double(t * (to.x - from.x), t * (to.y - from.y));
+
+        BoundsD bounds = generator.getBounds();
 
         double w = bounds.width();
         double h = bounds.height();
@@ -75,6 +72,8 @@ public class MandelbrotDrawer extends DrawerBase {
 
     private void zoom(Point to, boolean zoomOut) {
         double zoom = zoomOut ? 1 + ZOOM_SPEED : 1 - ZOOM_SPEED;
+
+        BoundsD bounds = generator.getBounds();
 
         // zoom in/out
         double newWidth = bounds.width() * zoom;
@@ -102,8 +101,9 @@ public class MandelbrotDrawer extends DrawerBase {
         try {
             lock.lock();
 
+            generator.setImageSize(getSize());
             generationTime.start();
-            image = generator.generate(bounds, getSize(), palette, iteration);
+            image = generator.generate();
             generationTime.end();
         } finally {
             lock.unlock();
@@ -121,7 +121,8 @@ public class MandelbrotDrawer extends DrawerBase {
         try {
             lock.lock();
 
-            return generator.generate(bounds, size == null ? getSize() : size, palette, iteration);
+            generator.setImageSize(size == null ? getSize() : size);
+            return generator.generate();
         } finally {
             lock.unlock();
         }
@@ -134,6 +135,7 @@ public class MandelbrotDrawer extends DrawerBase {
     public void setGenerator(MandelbrotGenerator generator) {
         try {
             lock.lock();
+            generator.copy(this.generator);
             this.generator = generator;
         } finally {
             lock.unlock();
@@ -141,26 +143,39 @@ public class MandelbrotDrawer extends DrawerBase {
     }
 
     public Palette getPalette() {
-        return palette;
+        return generator.getPalette();
     }
 
     public void setPalette(Palette palette) {
         try {
             lock.lock();
-            this.palette = palette;
+            generator.setPalette(palette);
         } finally {
             lock.unlock();
         }
     }
 
     public int getIteration() {
-        return iteration;
+        return generator.getMaxIteration();
     }
 
     public void setIteration(int iteration) {
         try {
             lock.lock();
-            this.iteration = iteration;
+            generator.setMaxIteration(iteration);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean isSmooth() {
+        return generator.isSmooth();
+    }
+
+    public void setSmooth(boolean smooth) {
+        try {
+            lock.lock();
+            generator.setSmooth(smooth);
         } finally {
             lock.unlock();
         }

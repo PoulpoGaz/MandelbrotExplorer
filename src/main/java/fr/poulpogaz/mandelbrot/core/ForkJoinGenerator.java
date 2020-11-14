@@ -10,15 +10,15 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
-public class ForkJoinGenerator implements MandelbrotGenerator {
+public class ForkJoinGenerator extends MandelbrotGenerator {
 
     private static final int TILE_SIZE = 64;
 
     private ForkJoinPool pool;
 
     @Override
-    public BufferedImage generate(BoundsD bounds, Dimension size, Palette palette, int maxIteration) {
-        Utils.correctAspectRatio(bounds, size);
+    public BufferedImage generate() {
+        Utils.correctAspectRatio(bounds, imageSize);
 
         palette.preCompute(maxIteration);
 
@@ -26,16 +26,17 @@ public class ForkJoinGenerator implements MandelbrotGenerator {
             pool = new ForkJoinPool();
         }
 
-        int[] pixels = new int[size.width * size.height];
+        int[] pixels = new int[imageSize.width * imageSize.height];
 
         pool.invoke(new Action(bounds,
-                new BoundsI(0, 0, size.width, size.height),
-                size,
+                new BoundsI(0, 0, imageSize.width, imageSize.height),
+                imageSize,
                 maxIteration,
                 palette,
+                smooth,
                 pixels));
 
-        return Utils.toImage(pixels, size.width, size.height);
+        return Utils.toImage(pixels, imageSize.width, imageSize.height);
     }
 
     private static class Action extends RecursiveAction {
@@ -53,21 +54,23 @@ public class ForkJoinGenerator implements MandelbrotGenerator {
 
         private final int maxIteration;
         private final Palette palette;
+        private final boolean smooth;
         private final int[] pixels;
 
-        public Action(BoundsD fullBounds, BoundsI partialImageBounds, Dimension imageSize, int maxIteration, Palette palette, int[] pixels) {
+        public Action(BoundsD fullBounds, BoundsI partialImageBounds, Dimension imageSize, int maxIteration, Palette palette, boolean smooth, int[] pixels) {
             this.fullBounds = fullBounds;
             this.partialImageBounds = partialImageBounds;
             this.imageSize = imageSize;
             this.maxIteration = maxIteration;
             this.palette = palette;
+            this.smooth = smooth;
             this.pixels = pixels;
         }
 
         @Override
         protected void compute() {
             if (partialImageBounds.width() <= TILE_SIZE && partialImageBounds.height() <= TILE_SIZE) {
-                PartialJob job = new PartialJob(fullBounds, partialImageBounds, imageSize, maxIteration, palette, pixels);
+                PartialJob job = new PartialJob(fullBounds, partialImageBounds, imageSize, maxIteration, palette, smooth, pixels);
                 job.run();
             } else {
                 List<ForkJoinTask<?>> tasks = new ArrayList<>();
@@ -86,6 +89,7 @@ public class ForkJoinGenerator implements MandelbrotGenerator {
                             imageSize,
                             maxIteration,
                             palette,
+                            smooth,
                             pixels));
 
                 }

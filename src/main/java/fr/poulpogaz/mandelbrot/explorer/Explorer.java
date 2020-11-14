@@ -48,12 +48,19 @@ public class Explorer extends JFrame implements WindowListener {
         nIteration = new JSpinner(new SpinnerNumberModel(128, 1, Integer.MAX_VALUE, 1));
         nIteration.addChangeListener(this::iterationChanged);
 
+        JCheckBox smooth = new JCheckBox("Smooth");
+        smooth.setSelected(drawer.isSmooth());
+        smooth.addActionListener((l) -> {
+            drawer.setSmooth(smooth.isSelected());
+        });
+
         JButton export = new JButton("Export");
         export.addActionListener(new ExportAction(drawer));
 
         JPanel bot = new JPanel();
         bot.add(generators);
         bot.add(nIteration);
+        bot.add(smooth);
         bot.add(export);
 
         content.add(drawer, BorderLayout.CENTER);
