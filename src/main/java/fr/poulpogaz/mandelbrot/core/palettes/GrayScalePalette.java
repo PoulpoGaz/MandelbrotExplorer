@@ -10,4 +10,8 @@ public class GrayScalePalette extends Palette {
                 ((gray & 0xFF) << 8)  |
                 ((gray & 0xFF) << 0);
     }
+
+    public String toString() {
+        return "Gray scale palette";
+    }
 }

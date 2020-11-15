@@ -8,4 +8,9 @@ public class HuePalette extends Palette {
     public int compute(int iteration, int maxIteration) {
         return Color.HSBtoRGB((float) iteration / maxIteration, 1f, 1f);
     }
+
+    @Override
+    public String toString() {
+        return "Hue palette";
+    }
 }

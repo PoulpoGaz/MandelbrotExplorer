@@ -43,7 +43,7 @@ public abstract class Palette {
         }
     }
 
-    protected int colorLerp(int c1, int c2, double t) {
+    public static int colorLerp(int c1, int c2, double t) {
         int r1 = (c1 >> 16) & 0xFF;
         int g1 = (c1 >> 8) & 0xFF;
         int b1 = c1 & 0xFF;
@@ -52,10 +52,18 @@ public abstract class Palette {
         int g2 = (c2 >> 8) & 0xFF;
         int b2 = c2 & 0xFF;
 
-        int r3 = (int) (r1 + t * (r2 - r1));
-        int g3 = (int) (g1 + t * (g2 - g1));
-        int b3 = (int) (b1 + t * (b2 - b1));
+        int r3 = lerp(r1, r2, t);
+        int g3 = lerp(g1, g2, t);
+        int b3 = lerp(b1, b2, t);
 
         return 0xFF000000 | (r3 & 0xFF) << 16 | (g3 & 0xFF) << 8 | (b3 & 0xFF);
+    }
+
+    public static int lerp(int a, int b, double t) {
+        return (int) ((1 - t) * a + t * b);
+    }
+
+    public static double lerp(double a, double b, double t) {
+        return (1 - t) * a + t * b;
     }
 }

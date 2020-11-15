@@ -4,6 +4,7 @@ import fr.poulpogaz.mandelbrot.Chronometer;
 import fr.poulpogaz.mandelbrot.core.BoundsD;
 import fr.poulpogaz.mandelbrot.core.MandelbrotGenerator;
 import fr.poulpogaz.mandelbrot.core.SimpleGenerator;
+import fr.poulpogaz.mandelbrot.core.palettes.GradientPalette;
 import fr.poulpogaz.mandelbrot.core.palettes.Palette;
 import fr.poulpogaz.mandelbrot.explorer.input.MouseHandler;
 
@@ -25,13 +26,15 @@ public class MandelbrotDrawer extends DrawerBase {
     private final Lock lock = new ReentrantLock();
 
     // draw variables
-    private MandelbrotGenerator generator = new SimpleGenerator();
+    private MandelbrotGenerator generator;
 
     // update variables
     private Point lastPoint;
 
-    public MandelbrotDrawer() {
-        setPreferredSize(new Dimension(512, 256));
+    public MandelbrotDrawer(MandelbrotGenerator generator) {
+        this.generator = generator;
+
+        setPreferredSize(new Dimension(512, 512));
 
         keyHandler.addKey(KeyEvent.VK_SHIFT); // zoom out
         keyHandler.addKey(KeyEvent.VK_R); // reset
@@ -155,11 +158,11 @@ public class MandelbrotDrawer extends DrawerBase {
         }
     }
 
-    public int getIteration() {
+    public int getMaxIteration() {
         return generator.getMaxIteration();
     }
 
-    public void setIteration(int iteration) {
+    public void setMaxIteration(int iteration) {
         try {
             lock.lock();
             generator.setMaxIteration(iteration);
