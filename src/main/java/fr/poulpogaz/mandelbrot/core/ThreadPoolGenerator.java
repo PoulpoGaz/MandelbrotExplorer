@@ -1,7 +1,5 @@
 package fr.poulpogaz.mandelbrot.core;
 
-import fr.poulpogaz.mandelbrot.core.palettes.Palette;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -10,17 +8,22 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ThreadPoolGenerator extends MandelbrotGenerator {
+public class ThreadPoolGenerator implements MandelbrotGenerator {
 
     public static final int TILE_SIZE = 64;
 
     private ExecutorService executor;
 
     @Override
-    public BufferedImage generate() {
+    public BufferedImage generate(Settings settings) {
+        settings = settings.copy();
+
+        BoundsD bounds = settings.getBounds();
+        Dimension imageSize = settings.getImageSize();
+
         Utils.correctAspectRatio(bounds, imageSize);
 
-        palette.preCompute(maxIteration);
+        settings.palettePreCompute();
 
         if (executor == null) {
             int nCore = Runtime.getRuntime().availableProcessors();
@@ -30,8 +33,6 @@ public class ThreadPoolGenerator extends MandelbrotGenerator {
 
         int width = (int) Math.ceil(imageSize.getWidth() / TILE_SIZE);
         int height = (int) Math.ceil(imageSize.getHeight() / TILE_SIZE);
-
-        double add = bounds.width() / width; // bounds.height() / height = bounds.width() / width because we have corrected the aspect ratio
 
         int[] pixels = new int[imageSize.width * imageSize.height];
 
@@ -47,7 +48,7 @@ public class ThreadPoolGenerator extends MandelbrotGenerator {
 
                 BoundsI imageBounds = new BoundsI(minX_, minY_, maxX_, maxY_);
 
-                PartialJob job = new PartialJob(bounds, imageBounds, imageSize, maxIteration, palette, smooth, pixels);
+                PartialJob job = new PartialJob(imageBounds, settings, pixels);
                 jobsList.add(CompletableFuture.runAsync(job, executor));
             }
         }

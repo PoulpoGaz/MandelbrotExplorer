@@ -3,8 +3,7 @@ package fr.poulpogaz.mandelbrot.explorer;
 import fr.poulpogaz.mandelbrot.Chronometer;
 import fr.poulpogaz.mandelbrot.core.BoundsD;
 import fr.poulpogaz.mandelbrot.core.MandelbrotGenerator;
-import fr.poulpogaz.mandelbrot.core.SimpleGenerator;
-import fr.poulpogaz.mandelbrot.core.palettes.GradientPalette;
+import fr.poulpogaz.mandelbrot.core.Settings;
 import fr.poulpogaz.mandelbrot.core.palettes.Palette;
 import fr.poulpogaz.mandelbrot.explorer.input.MouseHandler;
 
@@ -25,7 +24,8 @@ public class MandelbrotDrawer extends DrawerBase {
 
     private final Lock lock = new ReentrantLock();
 
-    // draw variables
+    // mandelbrot
+    private final Settings settings = new Settings();
     private MandelbrotGenerator generator;
 
     // update variables
@@ -34,7 +34,7 @@ public class MandelbrotDrawer extends DrawerBase {
     public MandelbrotDrawer(MandelbrotGenerator generator) {
         this.generator = generator;
 
-        setPreferredSize(new Dimension(512, 512));
+        setPreferredSize(new Dimension(512, 288));
 
         keyHandler.addKey(KeyEvent.VK_SHIFT); // zoom out
         keyHandler.addKey(KeyEvent.VK_R); // reset
@@ -51,7 +51,7 @@ public class MandelbrotDrawer extends DrawerBase {
         }
 
         if (keyHandler.isKeyReleased(KeyEvent.VK_R)) {
-            generator.setBounds(new BoundsD(MandelbrotGenerator.DEFAULT_BOUNDS));
+            settings.setBounds(new BoundsD(Settings.DEFAULT_BOUNDS));
         }
 
         lastPoint = point;
@@ -62,7 +62,7 @@ public class MandelbrotDrawer extends DrawerBase {
 
         Point2D diff = new Point2D.Double(t * (to.x - from.x), t * (to.y - from.y));
 
-        BoundsD bounds = generator.getBounds();
+        BoundsD bounds = settings.getBounds();
 
         double w = bounds.width();
         double h = bounds.height();
@@ -76,7 +76,7 @@ public class MandelbrotDrawer extends DrawerBase {
     private void zoom(Point to, boolean zoomOut) {
         double zoom = zoomOut ? 1 + ZOOM_SPEED : 1 - ZOOM_SPEED;
 
-        BoundsD bounds = generator.getBounds();
+        BoundsD bounds = settings.getBounds();
 
         // zoom in/out
         double newWidth = bounds.width() * zoom;
@@ -104,9 +104,9 @@ public class MandelbrotDrawer extends DrawerBase {
         try {
             lock.lock();
 
-            generator.setImageSize(getSize());
+            settings.setImageSize(getSize());
             generationTime.start();
-            image = generator.generate();
+            image = generator.generate(settings);
             generationTime.end();
         } finally {
             lock.unlock();
@@ -124,8 +124,8 @@ public class MandelbrotDrawer extends DrawerBase {
         try {
             lock.lock();
 
-            generator.setImageSize(size == null ? getSize() : size);
-            return generator.generate();
+            settings.setImageSize(size == null ? getSize() : size);
+            return generator.generate(settings);
         } finally {
             lock.unlock();
         }
@@ -138,7 +138,6 @@ public class MandelbrotDrawer extends DrawerBase {
     public void setGenerator(MandelbrotGenerator generator) {
         try {
             lock.lock();
-            generator.copy(this.generator);
             this.generator = generator;
         } finally {
             lock.unlock();
@@ -146,39 +145,39 @@ public class MandelbrotDrawer extends DrawerBase {
     }
 
     public Palette getPalette() {
-        return generator.getPalette();
+        return settings.getPalette();
     }
 
     public void setPalette(Palette palette) {
         try {
             lock.lock();
-            generator.setPalette(palette);
+            settings.setPalette(palette);
         } finally {
             lock.unlock();
         }
     }
 
     public int getMaxIteration() {
-        return generator.getMaxIteration();
+        return settings.getMaxIteration();
     }
 
     public void setMaxIteration(int iteration) {
         try {
             lock.lock();
-            generator.setMaxIteration(iteration);
+            settings.setMaxIteration(iteration);
         } finally {
             lock.unlock();
         }
     }
 
     public boolean isSmooth() {
-        return generator.isSmooth();
+        return settings.isSmooth();
     }
 
     public void setSmooth(boolean smooth) {
         try {
             lock.lock();
-            generator.setSmooth(smooth);
+            settings.setSmooth(smooth);
         } finally {
             lock.unlock();
         }

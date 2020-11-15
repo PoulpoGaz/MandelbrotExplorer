@@ -1,10 +1,7 @@
 package fr.poulpogaz.mandelbrot.core.palettes;
 
-import javax.swing.plaf.metal.MetalIconFactory;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 
 public class GradientPalette extends Palette {
 

@@ -15,7 +15,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class Explorer extends JFrame implements WindowListener {
 
@@ -54,20 +53,20 @@ public class Explorer extends JFrame implements WindowListener {
         content.setLayout(new BorderLayout());
 
         drawer = new MandelbrotDrawer(simpleGenerator);
-        simpleGenerator.setPalette(grayScalePalette);
+        drawer.setPalette(grayScalePalette);
 
         generators = new JComboBox<>();
         generators.addItem(simpleGenerator);
         generators.addItem(threadPoolGenerator);
         generators.addItem(forkJoinGenerator);
-        generators.setSelectedItem(drawer.getGenerator());
+        generators.setSelectedItem(simpleGenerator);
         generators.addItemListener(this::switchGenerator);
 
         palettes = new JComboBox<>();
         palettes.addItem(grayScalePalette);
         palettes.addItem(huePalette);
         palettes.addItem(gradientPalette);
-        palettes.setSelectedItem(drawer.getPalette());
+        palettes.setSelectedItem(grayScalePalette);
         palettes.addItemListener(this::switchPalette);
 
         nIteration = new JSpinner(new SpinnerNumberModel(drawer.getMaxIteration(), 1, Integer.MAX_VALUE, 1));
@@ -92,13 +91,16 @@ public class Explorer extends JFrame implements WindowListener {
 
         JPanel bot = new JPanel();
         bot.add(generators);
-        bot.add(palettes);
-        bot.add(editGradient);
         bot.add(nIteration);
-        bot.add(smooth);
         bot.add(export);
 
+        JPanel top = new JPanel();
+        top.add(palettes);
+        top.add(editGradient);
+        top.add(smooth);
+
         content.add(drawer, BorderLayout.CENTER);
+        content.add(top, BorderLayout.NORTH);
         content.add(bot, BorderLayout.SOUTH);
 
         setContentPane(content);

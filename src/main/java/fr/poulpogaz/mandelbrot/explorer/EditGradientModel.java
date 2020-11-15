@@ -3,10 +3,8 @@ package fr.poulpogaz.mandelbrot.explorer;
 import fr.poulpogaz.mandelbrot.core.palettes.GradientPalette;
 import fr.poulpogaz.mandelbrot.core.palettes.Palette;
 
-import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.List;
 
 public class EditGradientModel {
 

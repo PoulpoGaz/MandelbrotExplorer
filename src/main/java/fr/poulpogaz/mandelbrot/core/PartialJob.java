@@ -18,77 +18,47 @@ public class PartialJob implements Runnable {
 
     private final boolean smooth;
 
-    public PartialJob(BoundsD bounds, BoundsI partialImageBounds, Dimension imageSize, int maxIteration, Palette palette, boolean smooth, int[] pixels) {
-        this.bounds = bounds;
+    public PartialJob(BoundsI partialImageBounds, Settings settings, int[] pixels) {
         this.partialImageBounds = partialImageBounds;
-        this.imageSize = imageSize;
-        this.maxIteration = maxIteration;
-        this.palette = palette;
-        this.smooth = smooth;
+        this.bounds = new BoundsD(settings.getBounds());
+        this.imageSize = settings.getImageSize();
+        this.maxIteration = settings.getMaxIteration();
+        this.palette = settings.getPalette();
+        this.smooth = settings.isSmooth();
         this.pixels = pixels;
     }
 
     public void run() {
+        double widthFraction = bounds.width() / imageSize.width;
+        double heightFraction = bounds.height() / imageSize.height;
+
         for (int yImage = partialImageBounds.minY(); yImage < partialImageBounds.maxY(); yImage++) {
-            double yCache = (double) yImage / imageSize.height * bounds.height() + bounds.minY();
+            double yCache = (double) yImage * heightFraction + bounds.minY();
 
             for (int xImage = partialImageBounds.minX(); xImage < partialImageBounds.maxX(); xImage++) {
                 double y = yCache;
-                double x = (double) xImage / imageSize.width * bounds.width() + bounds.minX();
+                double x = (double) xImage * widthFraction + bounds.minX();
 
-                int color;
-                if (isInsideMandelbrot(x, y)) {
-                    color = palette.of(maxIteration, maxIteration, x, y, false);
-                } else {
-                    double x0 = x;
-                    double y0 = y;
+                double x0 = x;
+                double y0 = y;
 
-                    int iteration = 0;
+                double x2 = x * x;
+                double y2 = y * y;
 
-                    double xOld = 0;
-                    double yOld = 0;
-                    int period = 0;
-                    while (x * x + y * y < 4 && iteration < maxIteration) {
-                        double xTemp = x * x - y * y + x0;
-                        y = 2 * x * y + y0;
-                        x = xTemp;
+                int iteration = 0;
 
-                        iteration++;
+                while (x2 + y2 < 4 && iteration < maxIteration) {
+                    y = 2 * x * y + y0;
+                    x = x2 - y2 + x0;
 
-                        // periodicity checking
-                        if (x == xOld && yOld == y) {
-                            iteration = maxIteration;
-                            break;
-                        }
+                    iteration++;
 
-                        period++;
-
-                        if (period > 20) {
-                            period = 0;
-                            xOld = x;
-                            yOld = y;
-                        }
-                    }
-
-                    color = palette.of(iteration, maxIteration, x, y, smooth);
+                    x2 = x * x;
+                    y2 = y * y;
                 }
 
-                pixels[yImage * imageSize.width + xImage] = color;
+                pixels[yImage * imageSize.width + xImage] = palette.of(iteration, maxIteration, x, y, smooth);
             }
         }
-    }
-
-    private boolean isInsideMandelbrot(double x, double y) {
-        // check if the point is inside the main cardioid
-        double pSquare = Math.pow(x - 0.25, 2) + y * y;
-        double p = Math.sqrt(pSquare);
-
-        double lambda = p - 2 * pSquare + 0.25;
-
-        if (x < lambda) { // the point is inside the main cardioid, so inside the mandelbrot set
-            return true;
-        }
-
-        return Math.pow(x + 1, 2) + y * y < 1 / 16d; // check if the point is inside the main bud
     }
 }
